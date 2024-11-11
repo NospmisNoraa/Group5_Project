@@ -1,0 +1,226 @@
+using System; // Importing the System namespace for basic functionalities
+using System.Collections.Generic; // For using Dictionary and List
+using System.IO; // For file operations
+using System.Linq; // For LINQ operations
+
+class Program
+{
+    static string filePath = "contacts.txt"; // Define the file path for saving/loading contacts
+
+    static void Main()
+    {
+        // Load the dictionary from file
+        var contacts = LoadDictionary();
+
+        // Infinite loop to keep the application running
+        while (true)
+        {
+            DisplayOptions(); // Show menu options
+
+            Console.Write("\nEnter your choice: ");
+            char choice = Console.ReadKey().KeyChar; // Read a single key press
+            Console.WriteLine(); // Move to the next line
+
+            // Switch statement to handle user choices
+            switch (choice)
+            {
+                case 'a': // Case for adding a new contact
+                    AddNewKeyValue(contacts);
+                    break;
+                case 'b': // Case for displaying contact contents
+                    DisplayContactContents(contacts);
+                    break;
+                case 'c': // Case for removing a contact
+                    RemoveContact(contacts);
+                    break;
+                case 'e': // Case for editing a contact
+                    EditContact(contacts);
+                    break;
+                case 's': // Case for saving the contacts to a file
+                    SaveContacts(contacts);
+                    break;
+                case 'g': // Case for sorting the keys
+                    SortKeys(contacts);
+                    break;
+                case 'x': // Case for exiting the program
+                    Console.WriteLine("Exiting the program. Goodbye!");
+                    Environment.Exit(0); // Exit gracefully
+                    break;
+                default: // Default case for invalid input
+                    Console.WriteLine("Invalid option. Please select a valid choice from the menu.");
+                    break;
+            }
+        }
+    }
+
+    // Method to load the dictionary from a file with error handling
+    static Dictionary<string, List<string>> LoadDictionary()
+    {
+        var dictionary = new Dictionary<string, List<string>>();
+
+        try
+        {
+            if (File.Exists(filePath)) // Check if the file exists
+            {
+                var lines = File.ReadAllLines(filePath); // Read all lines from the file
+                foreach (var line in lines) // Loop through each line
+                {
+                    var parts = line.Split(new[] { ':' }, 2); // Split the line into key and value
+                    if (parts.Length == 2)
+                    {
+                        var key = parts[0].Trim(); // Trim whitespace from the key
+                        var values = parts[1].Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
+                                             .Select(v => v.Trim()).ToList(); // Split values and trim whitespace
+                        dictionary[key] = values; // Add to the dictionary
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading dictionary: {ex.Message}"); // Handle errors gracefully
+        }
+
+        return dictionary; // Return the populated dictionary
+    }
+
+    // Method to display menu options
+    static void DisplayOptions()
+    {
+        Console.WriteLine("==================================");
+        Console.WriteLine("Menu Options:");
+        Console.WriteLine("a. Add a New Contact");
+        Console.WriteLine("b. Display Contact Contents");
+        Console.WriteLine("c. Remove a Contact");
+        Console.WriteLine("e. Edit a Contact");
+        Console.WriteLine("s. Save Contacts to File");
+        Console.WriteLine("g. Sort the Keys");
+        Console.WriteLine("x. Exit");
+        Console.WriteLine("==================================");
+    }
+
+    // Method to read user input with a prompt
+    static string ReadInput(string prompt)
+    {
+        Console.Write(prompt);
+        return Console.ReadLine()?.Trim(); // Return trimmed input
+    }
+
+    // Method to add a new key-value pair to the dictionary
+    static void AddNewKeyValue(Dictionary<string, List<string>> dictionary)
+    {
+        string key = ReadInput("Enter new key: "); // Read key
+        string value = ReadInput("Enter value: "); // Read value
+
+        if (string.IsNullOrWhiteSpace(key) || string.IsNullOrWhiteSpace(value)) // Validate inputs
+        {
+            Console.WriteLine("Key and value cannot be empty. Please try again.");
+            return; // Exit the method
+        }
+
+        if (!dictionary.ContainsKey(key)) // Check if key already exists
+        {
+            dictionary[key] = new List<string> { value }; // Add new key-value pair
+            Console.WriteLine($"New key '{key}' added with value '{value}'.\n");
+        }
+        else
+        {
+            Console.WriteLine("Key already exists. Use option 'e' to add values to an existing key.\n");
+        }
+    }
+
+    // Method to display the contents of the contacts
+    static void DisplayContactContents(Dictionary<string, List<string>> contacts)
+    {
+        Console.WriteLine("\nContacts:");
+
+        if (contacts.Count == 0)
+        {
+            Console.WriteLine("No contacts found.\n"); // Notify if no contacts exist
+            return; // Exit the method
+        }
+
+        foreach (var kvp in contacts) // Loop through each key-value pair
+        {
+            Console.WriteLine($"Name: {kvp.Key}, Details: {string.Join(", ", kvp.Value)}"); // Display key and details
+        }
+        Console.WriteLine(); // Move to the next line
+    }
+
+    // Method to remove a contact from the dictionary
+    static void RemoveContact(Dictionary<string, List<string>> contacts)
+    {
+        string name = ReadInput("Enter contact name to remove: "); // Prompt for name
+
+        if (contacts.Remove(name)) // Attempt to remove the contact
+        {
+            Console.WriteLine($"Contact '{name}' removed successfully.\n");
+        }
+        else
+        {
+            Console.WriteLine("Contact not found. Please check the name and try again.\n");
+        }
+    }
+
+    // Method to edit a contact's details
+    static void EditContact(Dictionary<string, List<string>> contacts)
+    {
+        string name = ReadInput("Enter contact name to edit: "); // Prompt for the contact name
+
+        if (!contacts.ContainsKey(name))
+        {
+            Console.WriteLine("Contact not found. Please check the name and try again.\n");
+            return; // Exit the method
+        }
+
+        Console.WriteLine($"Current details for '{name}': {string.Join(", ", contacts[name])}"); // Show current details
+
+        // Prepare to collect new details
+        var newDetails = new List<string>();
+
+        string newPhone = ReadInput("Enter new phone number (or press enter to keep current): "); // Prompt for new phone
+        newDetails.Add(string.IsNullOrWhiteSpace(newPhone) ? contacts[name].FirstOrDefault(d => d.StartsWith("Phone:")) : "Phone: " + newPhone); // Keep current if empty
+
+        string newEmail = ReadInput("Enter new email address (or press enter to keep current): "); // Prompt for new email
+        newDetails.Add(string.IsNullOrWhiteSpace(newEmail) ? contacts[name].FirstOrDefault(d => d.StartsWith("Email:")) : "Email: " + newEmail); // Keep current if empty
+
+        string newAddress = ReadInput("Enter new address (or press enter to keep current): "); // Prompt for new address
+        newDetails.Add(string.IsNullOrWhiteSpace(newAddress) ? contacts[name].FirstOrDefault(d => d.StartsWith("Address:")) : "Address: " + newAddress); // Keep current if empty
+
+        contacts[name] = newDetails; // Update the contact
+        Console.WriteLine($"Contact '{name}' updated successfully.\n"); // Notify the user
+    }
+
+    // Method to save the contacts to a file
+    static void SaveContacts(Dictionary<string, List<string>> contacts)
+    {
+        try
+        {
+            using (var writer = new StreamWriter(filePath)) // Create a StreamWriter to write to the file
+            {
+                foreach (var kvp in contacts) // Loop through each key-value pair
+                {
+                    writer.WriteLine($"{kvp.Key}: {string.Join(", ", kvp.Value)}"); // Write to file
+                }
+            }
+            Console.WriteLine("Contacts saved to file.\n"); // Notify the user
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error saving contacts: {ex.Message}"); // Handle errors gracefully
+        }
+    }
+
+    // Method to sort and display the keys in the dictionary
+    static void SortKeys(Dictionary<string, List<string>> contacts)
+    {
+        Console.WriteLine("\nSorted Contacts:"); // Notify the user
+        var sortedKeys = contacts.Keys.OrderBy(k => k).ToList(); // Sort the keys alphabetically
+
+        foreach (var key in sortedKeys) // Loop through sorted keys
+        {
+            Console.WriteLine($"Name: {key}, Details: {string.Join(", ", contacts[key])}"); // Display the sorted keys with details
+        }
+        Console.WriteLine(); // Move to the next line
+    }
+}
