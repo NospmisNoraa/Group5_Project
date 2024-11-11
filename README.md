@@ -17,3 +17,6 @@ The file created will be "contacts.txt". The user can also load this file into t
 
 **UPDATE** V3
 Now added sort keys function to the contacts manager.
+
+**Update V4**
+Added recommendations per Walter's request.
