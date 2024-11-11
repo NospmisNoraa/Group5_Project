@@ -14,3 +14,6 @@ Save contacts to a file
 Load contacts from a file
 
 The file created will be "contacts.txt". The user can also load this file into the program as well.
+
+**UPDATE** V3
+Now added sort keys function to the contacts manager.
