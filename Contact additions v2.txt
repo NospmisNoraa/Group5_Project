@@ -1,0 +1,262 @@
+using System; // Importing the System namespace for basic functionalities
+using System.Collections.Generic; // Importing the generic collections namespace for using Dictionary and List
+using System.IO; // Importing the IO namespace for file handling
+using System.Linq; // Importing LINQ for query capabilities on collections
+
+class Program
+{
+    static string filePath = "contacts.txt"; // Define the file path for saving/loading the contacts
+
+    static void Main()
+    {
+        // Load the contacts from the file or create a new one if the file doesn't exist
+        Dictionary<string, List<string>> contacts = LoadContacts();
+
+        // Infinite loop to keep the application running
+        while (true)
+        {
+            // Display the menu options to the user
+            DisplayOptions();
+
+            // Prompt the user to enter their choice and read the input
+            Console.Write("\nEnter your choice: ");
+            char choice = Console.ReadKey().KeyChar; // Read a single key press
+            Console.WriteLine(); // Move to the next line
+
+            // Switch statement to handle user choices
+            switch (choice)
+            {
+                case 'a': // Case for adding a new contact
+                    AddNewContact(contacts);
+                    break; // Exit the case
+                case 'b': // Case for displaying contact contents
+                    DisplayContactContents(contacts);
+                    break; // Exit the case
+                case 'c': // Case for removing a contact
+                    RemoveContact(contacts);
+                    break; // Exit the case
+                case 'e': // Case for editing a contact
+                    EditContact(contacts);
+                    break; // Exit the case
+                case 's': // Case for saving the contacts to a file
+                    SaveContacts(contacts);
+                    break; // Exit the case
+                case 'f': // Case for searching a contact
+                    SearchContact(contacts);
+                    break; // Exit the case
+                case 'x': // Case for exiting the program
+                    Console.WriteLine("Exiting the program. Goodbye!");
+                    return; // Exit the Main method
+                default: // Default case for invalid input
+                    Console.WriteLine("Invalid option. Please select a valid choice from the menu.");
+                    break; // Exit the default case
+            }
+        }
+    }
+
+    // Method to display the menu options to the user
+    static void DisplayOptions()
+    {
+        // Display the menu options
+        Console.WriteLine("==================================");
+        Console.WriteLine("Menu Options:");
+        Console.WriteLine("a. Add a New Contact");
+        Console.WriteLine("b. Display Contact Contents");
+        Console.WriteLine("c. Remove a Contact");
+        Console.WriteLine("e. Edit a Contact");
+        Console.WriteLine("f. Search for a Contact");
+        Console.WriteLine("s. Save Contacts to File");
+        Console.WriteLine("x. Exit");
+        Console.WriteLine("==================================");
+    }
+
+    // Method to load the contacts from a file
+    static Dictionary<string, List<string>> LoadContacts()
+    {
+        var contacts = new Dictionary<string, List<string>>(); // Create a new dictionary
+
+        // Check if the file exists
+        if (File.Exists(filePath))
+        {
+            var lines = File.ReadAllLines(filePath); // Read all lines from the file
+            foreach (var line in lines) // Loop through each line
+            {
+                var parts = line.Split(new[] { ':' }, 2); // Split the line into name and details
+                if (parts.Length == 2) // Check if we have both name and details
+                {
+                    var name = parts[0].Trim(); // Get the name and trim whitespace
+                    var details = parts[1].Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries) // Split details by comma
+                                         .Select(d => d.Trim()).ToList(); // Trim whitespace from each detail
+                    contacts[name] = details; // Add name and its details to the dictionary
+                }
+            }
+        }
+
+        return contacts; // Return the populated contacts dictionary
+    }
+
+    // Method to save the contacts to a file
+    static void SaveContacts(Dictionary<string, List<string>> contacts)
+    {
+        using (var writer = new StreamWriter(filePath)) // Create a StreamWriter to write to the file
+        {
+            foreach (var kvp in contacts) // Loop through each key-value pair in the contacts
+            {
+                // Write the name and its details to the file, formatted as "name: detail1, detail2"
+                writer.WriteLine($"{kvp.Key}: {string.Join(", ", kvp.Value)}");
+            }
+        }
+        Console.WriteLine("Contacts saved to file.\n"); // Notify the user that the contacts have been saved
+    }
+
+    // Method to add a new contact to the dictionary
+    static void AddNewContact(Dictionary<string, List<string>> contacts)
+    {
+        Console.Write("Enter contact name: "); // Prompt for a contact name
+        string name = Console.ReadLine()?.Trim(); // Read the name and trim whitespace
+
+        // Check if the name is empty
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            Console.WriteLine("Contact name cannot be empty. Please try again.");
+            return; // Exit the method
+        }
+
+        // Prepare to collect contact details
+        var contactDetails = new List<string>();
+
+        Console.Write("Enter phone number: "); // Prompt for phone number
+        contactDetails.Add("Phone: " + Console.ReadLine()?.Trim()); // Add phone number
+
+        Console.Write("Enter email address: "); // Prompt for email
+        contactDetails.Add("Email: " + Console.ReadLine()?.Trim()); // Add email
+
+        // Optionally, ask for address
+        Console.Write("Enter address (optional): "); // Prompt for address
+        string address = Console.ReadLine()?.Trim(); // Read the address
+        if (!string.IsNullOrWhiteSpace(address)) // Check if the address is not empty
+        {
+            contactDetails.Add("Address: " + address); // Add address if provided
+        }
+
+        // Add the contact to the dictionary
+        contacts[name] = contactDetails; // Store the contact details under the name
+        Console.WriteLine($"Contact '{name}' added successfully.\n"); // Notify the user
+    }
+
+    // Method to display the contents of the contacts
+    static void DisplayContactContents(Dictionary<string, List<string>> contacts)
+    {
+        Console.WriteLine("\nContacts:");
+
+        // Check if the contacts dictionary is empty
+        if (contacts.Count == 0)
+        {
+            Console.WriteLine("No contacts found.\n"); // Notify the user
+            return; // Exit the method
+        }
+
+        // Loop through each key-value pair in the contacts
+        foreach (var kvp in contacts)
+        {
+            // Display the name and its associated details
+            Console.WriteLine($"Name: {kvp.Key}, Details: {string.Join(", ", kvp.Value)}");
+        }
+        Console.WriteLine(); // Move to the next line
+    }
+
+    // Method to remove a contact from the dictionary
+    static void RemoveContact(Dictionary<string, List<string>> contacts)
+    {
+        Console.Write("Enter contact name to remove: "); // Prompt for the name to remove
+        string name = Console.ReadLine()?.Trim(); // Read the name and trim whitespace
+
+        // Attempt to remove the contact from the dictionary
+        if (contacts.Remove(name))
+        {
+            Console.WriteLine($"Contact '{name}' removed successfully.\n"); // Notify the user of success
+        }
+        else
+        {
+            // Notify the user if the contact was not found
+            Console.WriteLine("Contact not found. Please check the name and try again.\n");
+        }
+    }
+
+    // Method to edit a contact's details
+    static void EditContact(Dictionary<string, List<string>> contacts)
+    {
+        Console.Write("Enter contact name to edit: "); // Prompt for the contact name
+        string name = Console.ReadLine()?.Trim(); // Read the name and trim whitespace
+
+        // Check if the contact exists
+        if (!contacts.ContainsKey(name))
+        {
+            Console.WriteLine("Contact not found. Please check the name and try again.\n");
+            return; // Exit the method
+        }
+
+        // Display current details
+        Console.WriteLine($"Current details for '{name}': {string.Join(", ", contacts[name])}");
+
+        // Prepare to collect new details
+        var newDetails = new List<string>();
+
+        Console.Write("Enter new phone number (or press enter to keep current): "); // Prompt for new phone number
+        string newPhone = Console.ReadLine()?.Trim();
+        if (!string.IsNullOrWhiteSpace(newPhone))
+        {
+            newDetails.Add("Phone: " + newPhone);
+        }
+        else
+        {
+            newDetails.Add(contacts[name].FirstOrDefault(d => d.StartsWith("Phone:"))); // Keep current phone
+        }
+
+        Console.Write("Enter new email address (or press enter to keep current): "); // Prompt for new email
+        string newEmail = Console.ReadLine()?.Trim();
+        if (!string.IsNullOrWhiteSpace(newEmail))
+        {
+            newDetails.Add("Email: " + newEmail);
+        }
+        else
+        {
+            newDetails.Add(contacts[name].FirstOrDefault(d => d.StartsWith("Email:"))); // Keep current email
+        }
+
+        // Optionally, ask for new address
+        Console.Write("Enter new address (or press enter to keep current): "); // Prompt for new address
+        string newAddress = Console.ReadLine()?.Trim();
+        if (!string.IsNullOrWhiteSpace(newAddress))
+        {
+            newDetails.Add("Address: " + newAddress);
+        }
+        else
+        {
+            newDetails.Add(contacts[name].FirstOrDefault(d => d.StartsWith("Address:"))); // Keep current address if exists
+        }
+
+        // Update the contact details
+        contacts[name] = newDetails; // Update the contact with the new details
+        Console.WriteLine($"Contact '{name}' updated successfully.\n"); // Notify the user
+    }
+
+    // Method to search for a contact in the dictionary
+    static void SearchContact(Dictionary<string, List<string>> contacts)
+    {
+        Console.Write("Enter contact name to search: "); // Prompt for the contact name
+        string name = Console.ReadLine()?.Trim(); // Read the name and trim whitespace
+
+        // Check if the contact exists
+        if (contacts.TryGetValue(name, out var details))
+        {
+            // Display the details of the found contact
+            Console.WriteLine($"Found contact '{name}': {string.Join(", ", details)}\n");
+        }
+        else
+        {
+            // Notify the user if the contact was not found
+            Console.WriteLine("Contact not found.\n");
+        }
+    }
+}
